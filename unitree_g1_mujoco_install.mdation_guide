@@ -1,0 +1,124 @@
+### Using the Unitree G1 EDU Robot Model in MuJoCo on Windows
+
+---
+
+#### Approach 1: Native Windows – MuJoCo Menagerie (Recommended for Quick Setup)
+This uses Google DeepMind's curated MJCF models for the G1 (37 DoF base; extendable for EDU hands). It's fully Windows-compatible via `pip install mujoco`. Ideal for visualization, physics testing, or Gymnasium envs.
+
+##### Step 1: Install MuJoCo and Dependencies
+- Install MuJoCo Python bindings (includes binaries; no manual download needed):
+  ```cmd
+  pip install mujoco
+  pip install gymnasium  # For env wrappers (optional)
+  ```
+- If you need the viewer (OpenGL rendering), ensure you have a GPU or use `MUJOCO_GL=egl` env var for headless.
+- Clone Menagerie:
+  ```cmd
+  git clone https://github.com/google-deepmind/mujoco_menagerie.git
+  cd mujoco_menagerie
+  ```
+
+##### Step 2: Load and Visualize the G1 Model
+- **Interactive Viewer** (opens a window; use mouse/WASD to interact):
+  ```cmd
+  python -m mujoco.viewer --mjcf unitree_g1\scene.xml
+  ```
+  - This loads the G1 in a flat terrain with lighting/skybox. Simulation runs at ~500 Hz.
+  - Controls: Drag to rotate camera; scroll to zoom; `Space` to pause.
+  - This script will swing the robot arm after 2s 
+
+- **Programmatic Python Script** (save as `g1_viewer.py` and run with `python g1_viewer.py`):
+  ```python
+  # g1_viewer.py  (WORKS WITH OLD MUJOCO 2.3.x)
+import mujoco
+import mujoco.viewer
+import numpy as np
+import time
+import os
+
+# --------------------------------------------------
+# AUTO-TRY BACKENDS (OLD API: launch_passive(model, data))
+# --------------------------------------------------
+backends = ["glfw", "egl", "osmes:osmesa"]
+model = None
+data = None
+viewer = None
+
+for backend in backends:
+    backend_name = backend.split(":")[-1] if ":" in backend else backend
+    print(f"\nTrying MUJOCO_GL={backend_name}...")
+    os.environ["MUJOCO_GL"] = backend_name
+
+    try:
+        # Load model + data
+        model = mujoco.MjModel.from_xml_path("scene.xml")
+        data = mujoco.MjData(model)
+        data.qpos[:] = 0.0
+        mujoco.mj_resetData(model, data)
+        mujoco.mj_forward(model, data)
+
+        # Disable timers
+        if hasattr(model.opt, "timer"):
+            for i in range(15): model.opt.timer[i] = 0
+
+        # OLD API: launch_passive(model, data)
+        viewer = mujoco.viewer.launch_passive(model, data)
+        if viewer is not None:
+            print(f"SUCCESS: {backend_name} works!")
+            break
+    except Exception as e:
+        print(f"  → {backend_name} failed: {e}")
+        viewer = None
+
+if viewer is None:
+    raise RuntimeError("ALL BACKENDS FAILED. Try: pip install mujoco --upgrade")
+
+# --------------------------------------------------
+# MAIN LOOP
+# --------------------------------------------------
+print("G1 ready. Ankles will swing in 2s...")
+start = time.time()
+def set_joint_by_name(name, value):
+    for i in range(model.nu):
+        act_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_ACTUATOR, i)
+        if name in act_name:
+            data.ctrl[i] = value
+            print(f"→ {act_name} = {value:.3f}")
+            return
+    print(f"WARNING: Joint '{name}' not found!")
+
+
+try:
+    while viewer.is_running():
+        t = time.time() - start
+
+        if t > 2.0:
+            set_joint_by_name("left_shoulder_pitch",  np.pi * 0.3 * np.sin(2 * np.pi * (t - 2)))
+            set_joint_by_name("left_shoulder_roll",   np.pi * 0.1 * np.sin(2 * np.pi * (t - 2)))
+            set_joint_by_name("right_shoulder_pitch",  np.pi * 0.3 * np.sin(2 * np.pi * (t - 5)))
+            set_joint_by_name("right_shoulder_roll",  -np.pi * 0.1 * np.sin(2 * np.pi * (t - 5)))
+        if t > 5.0:
+            set_joint_by_name("right_wrist_pitch",  np.pi * 0.3 * np.sin(2 * np.pi * (t - 5)))
+            set_joint_by_name("right_wrist_roll",  -np.pi * 0.1 * np.sin(2 * np.pi * (t - 5)))
+
+        mujoco.mj_step(model, data)
+        viewer.sync()
+        time.sleep(0.0005)
+
+finally:
+    viewer.close()
+    print("Viewer closed. SUCCESS!")
+  ```
+  - This mirrors your SDK demo: Zero pose → ankle swing. Adjust indices via `G1JointIndex` class.
+
+- **For MJX (GPU Acceleration, e.g., RL)**:
+  Use `scene_mjx.xml` for JAX compatibility:
+  ```python
+  import mujoco
+  import jax.numpy as jnp
+
+  model = mujoco.MjModel.from_xml_path("unitree_g1/scene_mjx.xml")
+  data = mujoco.MjData(model)
+  # Batch for parallel sims: data = data.batch(1024)  # GPU-friendly
+  ```
+
