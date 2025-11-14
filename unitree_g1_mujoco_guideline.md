@@ -2,14 +2,14 @@
 
 ---
 #### Prerequisites:
--GPU(RTX-4060 laptop version have been tested sucessfully)
--Update GPU Drivers
--NVIDIA: https://www.nvidia.com/Download/
--Intel: https://www.intel.com/content/www/us/en/download-center/home.html
--AMD: https://www.amd.com/en/support
--Install Visual C++ Redistributable
--Download: https://aka.ms/vs/17/release/vc_redist.x64.exe
--Run it
+- GPU(RTX-4060 laptop version have been tested sucessfully)
+- Update GPU Drivers
+- NVIDIA: https://www.nvidia.com/Download/
+- Intel: https://www.intel.com/content/www/us/en/download-center/home.html
+- AMD: https://www.amd.com/en/support
+- Install Visual C++ Redistributable
+- Download: https://aka.ms/vs/17/release/vc_redist.x64.exe
+- Run it
 
 #### Native Windows – MuJoCo Menagerie (Recommended for Quick Setup)
 This uses Google DeepMind's curated MJCF models for the G1 (37 DoF base; extendable for EDU hands). It's fully Windows-compatible via `pip install mujoco`. Ideal for visualization, physics testing, or Gymnasium envs.
@@ -38,9 +38,10 @@ This uses Google DeepMind's curated MJCF models for the G1 (37 DoF base; extenda
 
 - **Programmatic Python Script** (save as `g1_viewer.py` and run with `python g1_viewer.py`):
 - place the 'g1_viewer.py' inside the "unitree_g1" directory
+  
+  ```cmd
   set MUJOCO_GL=glfw && python g1_viewer.py
   ```
-
 
 
 
