@@ -47,18 +47,28 @@ if viewer is None:
 # --------------------------------------------------
 print("G1 ready. Ankles will swing in 2s...")
 start = time.time()
+def set_joint_by_name(name, value):
+    for i in range(model.nu):
+        act_name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_ACTUATOR, i)
+        if name in act_name:
+            data.ctrl[i] = value
+            print(f"→ {act_name} = {value:.3f}")
+            return
+    print(f"WARNING: Joint '{name}' not found!")
+
 
 try:
     while viewer.is_running():
         t = time.time() - start
 
         if t > 2.0:
-            data.ctrl[4] =  np.pi * 0.3 * np.sin(2 * np.pi * (t - 2))
-            data.ctrl[5] =  np.pi * 0.1 * np.sin(2 * np.pi * (t - 2))
-
+            set_joint_by_name("left_shoulder_pitch",  np.pi * 0.3 * np.sin(2 * np.pi * (t - 2)))
+            set_joint_by_name("left_shoulder_roll",   np.pi * 0.1 * np.sin(2 * np.pi * (t - 2)))
+            set_joint_by_name("right_shoulder_pitch",  np.pi * 0.3 * np.sin(2 * np.pi * (t - 5)))
+            set_joint_by_name("right_shoulder_roll",  -np.pi * 0.1 * np.sin(2 * np.pi * (t - 5)))
         if t > 5.0:
-            data.ctrl[10] =  np.pi * 0.3 * np.sin(2 * np.pi * (t - 5))
-            data.ctrl[11] = -np.pi * 0.1 * np.sin(2 * np.pi * (t - 5))
+            set_joint_by_name("right_wrist_pitch",  np.pi * 0.3 * np.sin(2 * np.pi * (t - 5)))
+            set_joint_by_name("right_wrist_roll",  -np.pi * 0.1 * np.sin(2 * np.pi * (t - 5)))
 
         mujoco.mj_step(model, data)
         viewer.sync()
