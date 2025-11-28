@@ -16,7 +16,21 @@ This guide is a complete, step-by-step summary based on official sources:
 - Ubuntu 22.04 LTS (native or WSL2 on Windows).
 - Basic terminal knowledge.
 - No real G1 needed (simulation only).
+first time to install window subsystem
+wsl --install
 
+in window bash
+wsl --install -d Ubuntu-22.04
+
+enter terminal with this command
+wsl -d Ubuntu-22.04
+
+uninstall
+wsl --unregister Ubuntu-22.04
+
+
+check available distributions
+wsl --list --online
 ---
 
 ## 1. Update System and Install Basic Dependencies
@@ -343,5 +357,6 @@ python3 g1_low_level_example.py
 **Congratulations!** Your G1 simulator is ready. Run the two scripts → watch it move. For questions, check GitHub issues or Unitree forums.
 
 --- 
+
 
 *This guide is self-contained for beginners. Total steps: 10. Estimated time: 30–60 min.*
